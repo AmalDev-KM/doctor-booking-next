@@ -5,6 +5,7 @@ import { loginSchema, registerSchema } from "@/validations/auth.validation";
 import { NextRequest } from "next/server";
 import { LoginDTO, RegisterDTO } from "../types/auth.types";
 
+///* Controller for user registration */
 export const createUserController = async (req: NextRequest) => {
   try {
     const body = await req.json();
@@ -29,6 +30,7 @@ export const createUserController = async (req: NextRequest) => {
   }
 };
 
+///* Controller for user login */
 export const LoginController = async (req: NextRequest) => {
   try {
     const body = await req.json();
@@ -39,9 +41,22 @@ export const LoginController = async (req: NextRequest) => {
       return errorResponse(error.details[0].message, 400);
     }
 
+    await connectDB();
+
     const token: string = await login(value as LoginDTO);
 
-    return successResponse({ token }, "Login successful", 200);
+    const res = successResponse({ token }, "Login successful", 200);
+
+    res.cookies.set({
+      name: "access_token",
+      value: token,
+      httpOnly: true,
+      secure: process.env.NODE_ENV === "production",
+      sameSite: "lax",
+      path: "/",
+      maxAge: 1 * 24 * 60 * 60, // Default to 1 day
+    });
+    return res;
   } catch (error) {
     console.error("Error in LoginController:", error);
     if (error instanceof Error) {
