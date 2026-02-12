@@ -1,36 +1,180 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# 🩺 Doctor Appointment Booking System
 
-## Getting Started
+A full-stack appointment booking platform built with **Next.js**, **MongoDB**, and **TypeScript**, designed with scalable backend architecture and CI/CD practices.
 
-First, run the development server:
+This project demonstrates production-style structuring with layered backend design, authentication, middleware protection, and automated build validation using GitHub Actions.
+
+---
+
+## 🚀 Tech Stack
+
+### Frontend & Backend
+
+* Next.js (App Router)
+* TypeScript
+* TailwindCSS
+
+### Backend Architecture
+
+* MongoDB + Mongoose
+* JWT Authentication (HttpOnly Cookies)
+* Joi Validation
+* Layered Architecture:
+
+  * Routes
+  * Controllers
+  * Services
+  * Validations
+  * Middleware
+  * Types
+
+### DevOps
+
+* GitHub Actions CI Pipeline
+* ESLint
+* Type Checking
+* Production Build Verification
+
+---
+
+## 🧱 Project Structure
+
+```
+src/
+│
+├── app/api/                # API Routes
+│
+├── controllers/            # Request handling logic
+├── services/               # Business logic
+├── validations/            # Joi schemas
+├── middlewares/            # Auth & Role guards
+├── models/                 # Mongoose models
+├── lib/                    # DB connection
+├── utils/                  # Helpers & responses
+├── types/                  # Shared TypeScript types
+```
+
+---
+
+## ✨ Features Implemented
+
+* User Registration
+* Login with JWT
+* HttpOnly Cookie Authentication
+* Role-based Authorization Middleware
+* Secure Password Storage (bcrypt)
+* Structured API Responses
+* MongoDB Connection Caching
+* CI Pipeline Build Validation
+
+---
+
+## 🔐 Authentication Flow
+
+1. User logs in
+2. Server validates credentials
+3. JWT issued
+4. Token stored as **HttpOnly cookie**
+5. Middleware verifies token for protected routes
+
+---
+
+## 🛠️ Local Development Setup
+
+### 1️⃣ Clone Repository
+
+```bash
+git clone <your-repo-url>
+cd doctor-booking
+```
+
+### 2️⃣ Install Dependencies
+
+```bash
+npm install
+```
+
+### 3️⃣ Create Environment File
+
+Create `.env.local`
+
+```
+MONGODB_URI=mongodb://127.0.0.1:27017/doctor_booking
+JWT_SECRET=your_secret_key
+JWT_EXPIRES_IN=7d
+```
+
+### 4️⃣ Run Development Server
 
 ```bash
 npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+---
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+## 🏗️ Build Project
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+```bash
+npm run build
+```
 
-## Learn More
+---
 
-To learn more about Next.js, take a look at the following resources:
+## ✅ CI Pipeline
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+A GitHub Actions pipeline automatically runs on push:
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+* Dependency install
+* Lint check
+* Type check
+* Next.js production build
 
-## Deploy on Vercel
+Located at:
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+```
+.github/workflows/ci.yml
+```
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+---
+
+## 🔒 Middleware Protection
+
+### Require Login
+
+```ts
+withAuth(req, handler)
+```
+
+### Require Role
+
+```ts
+withRole(req, ["admin"], handler)
+```
+
+---
+
+## 📌 Future Enhancements
+
+* Doctor Profile Module
+* Appointment Scheduling Engine
+* Availability Slot System
+* Email Notifications
+* Payment Integration
+* Admin Dashboard
+* Refresh Token System
+* Integration Tests
+* Docker Deployment
+
+---
+
+## 👨‍💻 Author
+
+**AmalDev K M**
+
+Tech enthusiast passionate about building scalable full-stack systems and exploring AI engineering.
+
+---
+
+## 📜 License
+
+This project is for learning and portfolio demonstration.
