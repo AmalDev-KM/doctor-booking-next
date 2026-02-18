@@ -1,3 +1,4 @@
+import cloudinary from "@/lib/cloudinary";
 import { Department } from "@/models/Department";
 import {
   CreateDepartmentDTO,
@@ -30,4 +31,30 @@ export const updateDepartment = async (
   }
 
   return updated;
+};
+
+export const deleteDepartment = async (id: string) => {
+  const department = await Department.findById(id);
+
+  if (!department) {
+    throw new Error("DEPARTMENT_NOT_FOUND");
+  }
+
+  if (department.departmentPublicId) {
+    await cloudinary.uploader.destroy(department.departmentPublicId);
+  }
+
+  department.isActive = false;
+  department.isDeleted = true;
+
+  await department.save();
+
+  return department;
+};
+
+export const getActiveDepartments = async () => {
+  return await Department.find({
+    isActive: true,
+    isDeleted: false,
+  }).lean();
 };

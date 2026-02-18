@@ -12,6 +12,9 @@ const DepartmentSchema = new Schema(
     departmentImageUrl: {
       type: String,
     },
+    departmentPublicId: {
+      type: String,
+    },
     isActive: {
       type: Boolean,
       default: true,

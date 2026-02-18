@@ -1,6 +1,8 @@
 import { connectDB } from "@/lib/db";
 import {
   createDepartment,
+  deleteDepartment,
+  getActiveDepartments,
   updateDepartment,
 } from "@/services/department.service";
 import { CreateDepartmentDTO } from "@/types/department.types";
@@ -11,7 +13,7 @@ import {
 } from "@/validations/department.validation";
 import { NextRequest, NextResponse } from "next/server";
 
-//create a new department
+//*create a new department */
 export const creatDepartmentController = async (req: NextRequest) => {
   try {
     const body = await req.json();
@@ -39,7 +41,7 @@ export const creatDepartmentController = async (req: NextRequest) => {
   }
 };
 
-//update new department
+//*update new department */
 export const updateDepartmentController = async (
   req: NextRequest,
   id: string,
@@ -67,6 +69,42 @@ export const updateDepartmentController = async (
       return errorResponse(err.message, 500);
     }
 
+    return errorResponse("Unexpected error", 500);
+  }
+};
+
+//* Delete a department (soft delete)
+export const deleteDepartmentController = async (
+  id: string,
+): Promise<NextResponse> => {
+  try {
+    await connectDB();
+    const deleted = await deleteDepartment(id);
+    return successResponse(deleted, "Department deleted successfully");
+  } catch (err: unknown) {
+    if (err instanceof Error) {
+      if (err.message === "DEPARTMENT_NOT_FOUND") {
+        return errorResponse("Department not found", 404);
+      }
+
+      return errorResponse(err.message, 500);
+    }
+
+    return errorResponse("Unexpected error", 500);
+  }
+};
+
+//* Get all active departments
+export const getAllDepartmentsController = async (): Promise<NextResponse> => {
+  try {
+    await connectDB();
+    const departments = await getActiveDepartments();
+
+    return successResponse(departments, "Success", 200);
+  } catch (error: unknown) {
+    if (error instanceof Error) {
+      return errorResponse(error.message, 500);
+    }
     return errorResponse("Unexpected error", 500);
   }
 };

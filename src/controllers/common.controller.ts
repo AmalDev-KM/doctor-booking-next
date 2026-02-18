@@ -1,6 +1,7 @@
 import crypto from "crypto";
 import { NextResponse } from "next/server";
 
+//* Controller for cloudnary signed credential *//
 export const cloudnaryCredentialsController = async () => {
   const timestamp = Math.floor(Date.now() / 1000);
 
