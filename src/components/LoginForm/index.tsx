@@ -4,23 +4,25 @@ import { Mail, Lock, Eye, EyeOff } from "lucide-react";
 import { Button } from "../ui/button";
 import { Input } from "../ui/input";
 import { Label } from "../ui/label";
+import { useForm } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
+import { initialValues, LoginSchema, loginSchema } from "./Schema";
 
 const LoginForm = () => {
-  const [email, setEmail] = useState("");
-  const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setIsLoading(true);
+  const hookForm = useForm<loginSchema>({
+    resolver: zodResolver(LoginSchema),
+    defaultValues: initialValues,
+  });
 
-    // Simulate API call
-    setTimeout(() => {
-      console.log("Login attempt:", { email, password });
-      setIsLoading(false);
-      // Add your authentication logic here
-    }, 1500);
+  const { handleSubmit } = hookForm;
+
+  const OnSubmit = (data: loginSchema) => {
+    setIsLoading(true);
+    console.log(data);
+    setIsLoading(false);
   };
 
   return (
@@ -41,7 +43,7 @@ const LoginForm = () => {
           </div>
 
           {/* Form */}
-          <form onSubmit={handleSubmit} className="space-y-6">
+          <form onSubmit={handleSubmit(OnSubmit)} className="space-y-6">
             {/* Email Field */}
             <div className="space-y-2">
               <Label
@@ -51,14 +53,12 @@ const LoginForm = () => {
                 Email Address
               </Label>
               <div className="relative">
-                <Mail className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-gray-400" />
-                <Input
-                  id="email"
+                <Mail className="absolute left-3 top-[35%] -translate-y-1/2 h-5 w-5 text-gray-400" />
+                <Input<loginSchema>
+                  name="email"
+                  HookForm={hookForm}
                   type="email"
                   placeholder="admin@priscripto.com"
-                  value={email}
-                  onChange={(e) => setEmail(e.target.value)}
-                  required
                   className="pl-10 h-11"
                 />
               </div>
@@ -73,20 +73,18 @@ const LoginForm = () => {
                 Password
               </Label>
               <div className="relative">
-                <Lock className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-gray-400" />
-                <Input
-                  id="password"
+                <Lock className="absolute left-3 top-[35%] -translate-y-1/2 h-5 w-5 text-gray-400" />
+                <Input<loginSchema>
+                  HookForm={hookForm}
+                  name="password"
                   type={showPassword ? "text" : "password"}
                   placeholder="••••••••"
-                  value={password}
-                  onChange={(e) => setPassword(e.target.value)}
-                  required
                   className="pl-10 pr-10 h-11"
                 />
                 <button
                   type="button"
                   onClick={() => setShowPassword(!showPassword)}
-                  className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 transition-colors"
+                  className="absolute right-3 top-[35%] -translate-y-1/2 text-gray-400 hover:text-gray-600 transition-colors"
                 >
                   {showPassword ? (
                     <EyeOff className="h-5 w-5" />
