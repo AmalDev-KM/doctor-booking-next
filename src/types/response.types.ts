@@ -9,3 +9,7 @@ export interface ApiFailure {
   message: string;
   error?: unknown;
 }
+
+
+// ✅ Union type (main response type)
+export type ApiResponse<T> = ApiSuccess<T> | ApiFailure

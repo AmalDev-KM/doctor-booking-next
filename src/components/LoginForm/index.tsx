@@ -7,10 +7,14 @@ import { Label } from "../ui/label";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { initialValues, LoginSchema, loginSchema } from "./Schema";
+import { loginUser } from "@/client/auth.client";
+import { useRouter } from "next/navigation";
+import { toast } from "sonner";
 
 const LoginForm = () => {
   const [showPassword, setShowPassword] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
+  //const router = useRouter();
 
   const hookForm = useForm<loginSchema>({
     resolver: zodResolver(LoginSchema),
@@ -19,10 +23,20 @@ const LoginForm = () => {
 
   const { handleSubmit } = hookForm;
 
-  const OnSubmit = (data: loginSchema) => {
-    setIsLoading(true);
-    console.log(data);
-    setIsLoading(false);
+  const OnSubmit = async (data: loginSchema) => {
+    try {
+      setIsLoading(true);
+      console.log(data);
+      const res = await loginUser(data);
+      if (res.success) {
+        toast.success(res.message);
+        //router.push("/dashboard");
+      }
+    } catch (error) {
+      console.log("Unexpectd error", error);
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   return (
