@@ -14,7 +14,7 @@ import { toast } from "sonner";
 const LoginForm = () => {
   const [showPassword, setShowPassword] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
-  //const router = useRouter();
+  const router = useRouter();
 
   const hookForm = useForm<loginSchema>({
     resolver: zodResolver(LoginSchema),
@@ -30,7 +30,7 @@ const LoginForm = () => {
       const res = await loginUser(data);
       if (res.success) {
         toast.success(res.message);
-        //router.push("/dashboard");
+        router.push("/dashboard");
       }
     } catch (error) {
       console.log("Unexpectd error", error);

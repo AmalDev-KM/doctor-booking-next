@@ -1,5 +1,5 @@
+import { successResponse } from "@/utils/responses";
 import crypto from "crypto";
-import { NextResponse } from "next/server";
 
 //* Controller for cloudnary signed credential *//
 export const cloudnaryCredentialsController = async () => {
@@ -12,11 +12,15 @@ export const cloudnaryCredentialsController = async () => {
     .update(paramsToSign)
     .digest("hex");
 
-  return NextResponse.json({
-    timestamp,
-    signature,
-    cloudName: process.env.CLOUDINARY_CLOUD_NAME,
-    apiKey: process.env.CLOUDINARY_API_KEY,
-    folder: "departments",
-  });
+  return successResponse(
+    {
+      timestamp,
+      signature,
+      cloudName: process.env.CLOUDINARY_CLOUD_NAME,
+      apiKey: process.env.CLOUDINARY_API_KEY,
+      folder: "departments",
+    },
+    "success",
+    200,
+  );
 };
