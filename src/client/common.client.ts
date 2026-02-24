@@ -1,6 +1,5 @@
 import { apiRequest } from "@/lib/apiClient";
 import { CloudnarySignatureResponse } from "@/types/apiResponse.types";
-import { file } from "zod";
 
 export const cloudnaryUploader = async () => {
   return apiRequest<CloudnarySignatureResponse>("get", "/cloudinary-signature");

@@ -15,6 +15,14 @@ const DepartmentSchema = new Schema(
     departmentPublicId: {
       type: String,
     },
+    doctorCount: {
+      type: Number,
+      default: 0,
+    },
+    patientCount: {
+      type: Number,
+      default: 0,
+    },
     isActive: {
       type: Boolean,
       default: true,

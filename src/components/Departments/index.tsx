@@ -7,6 +7,7 @@ import {
   Trash2,
   Building2,
   X,
+  Loader2,
   Image as ImageIcon,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -24,6 +25,9 @@ import {
   uploadDepartmentIamgeToCloudnary,
 } from "@/client/common.client";
 import { toast } from "sonner";
+import Image from "next/image";
+import { CreateDepartmentDTO } from "@/types/department.types";
+import { createDepartment } from "@/client/department.client";
 
 interface Department {
   id: number;
@@ -76,8 +80,10 @@ const initialDepartments: Department[] = [
 const Departments = () => {
   const [departments, setDepartments] =
     useState<Department[]>(initialDepartments);
-  const [searchQuery, setSearchQuery] = useState("");
-  const [isModalOpen, setIsModalOpen] = useState(false);
+  const [searchQuery, setSearchQuery] = useState<string>("");
+  const [isModalOpen, setIsModalOpen] = useState<boolean>(false);
+  const [deptImageURL, setDeptImageURL] = useState<string>("");
+  const [isUploading, setIsUploading] = useState<boolean>(false);
   const [editingDepartment, setEditingDepartment] = useState<Department | null>(
     null,
   );
@@ -91,6 +97,8 @@ const Departments = () => {
     resolver: zodResolver(DepartmentSchema),
     defaultValues: initialValues,
   });
+
+  const { handleSubmit } = hookForm;
 
   const filteredDepartments = departments.filter(
     (dept) =>
@@ -119,25 +127,13 @@ const Departments = () => {
     setFormData({ name: "", description: "", image: "" });
   };
 
-  const handleSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
-
-    if (editingDepartment) {
-      // Update existing department
-      setDepartments(
-        departments.map((dept) =>
-          dept.id === editingDepartment.id ? { ...dept, ...formData } : dept,
-        ),
-      );
+  const OnSubmit = async (data: CreateDepartmentDTO) => {
+    console.log(data);
+    const res = await createDepartment(data);
+    if (res.success) {
+      toast.success("Department created successfully");
     } else {
-      // Create new department
-      const newDepartment: Department = {
-        id: Math.max(...departments.map((d) => d.id)) + 1,
-        ...formData,
-        doctorCount: 0,
-        patientCount: 0,
-      };
-      setDepartments([...departments, newDepartment]);
+      toast.error("Failed to create department");
     }
 
     handleCloseModal();
@@ -154,31 +150,25 @@ const Departments = () => {
     if (!file) {
       return;
     }
-    console.log(file);
+    setIsUploading(true);
     const signedRes = await cloudnaryUploader();
-    console.log(signedRes.success, "Signed ressuccess");
     if (signedRes.success && signedRes.data) {
       try {
         const res = await uploadDepartmentIamgeToCloudnary(
           file,
           signedRes.data,
         );
-        console.log(res.publicId, "Public ID");
-        console.log(res.secureUrl, "Secure URL");
+        setDeptImageURL(res.secureUrl);
         hookForm.setValue("departmentImageUrl", res.secureUrl);
         hookForm.setValue("departmentPublicId", res.publicId);
-        // console.log("Image Upload successfull");
-        // toast.success("Image Uploaded successfully");
+        toast.success("Image uploaded successfully");
       } catch (error) {
         console.log(error);
         toast.error("Upload failed");
       }
     }
-    console.log(signedRes, "signed response");
+    setIsUploading(false);
   };
-
-  console.log(hookForm.watch("departmentPublicId"));
-  console.log(hookForm.watch("departmentImageUrl"));
 
   return (
     <div className="space-y-6">
@@ -392,7 +382,7 @@ const Departments = () => {
               </div>
 
               {/* Form */}
-              <form onSubmit={handleSubmit} className="space-y-4">
+              <form onSubmit={handleSubmit(OnSubmit)} className="space-y-4">
                 {/* Department Name */}
                 <div className="space-y-2">
                   <Label
@@ -437,11 +427,9 @@ const Departments = () => {
                   </Label>
                   <div className="relative">
                     <ImageIcon className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-gray-400" />
-                    <Input
+                    <input
                       type="file"
-                      name="departmentImageUrl"
-                      HookForm={hookForm}
-                      placeholder="Upload an image"
+                      disabled={isUploading}
                       onChange={OnFileUpload}
                       className={cn(
                         "pl-10 file:text-foreground placeholder:text-muted-foreground selection:bg-primary selection:text-primary-foreground dark:bg-input/30 border-input h-9 w-full min-w-0 rounded-md border bg-transparent px-3 py-1 text-base shadow-xs transition-[color,box-shadow] outline-none file:inline-flex file:h-7 file:border-0 file:bg-transparent file:text-sm file:font-medium disabled:pointer-events-none disabled:cursor-not-allowed disabled:opacity-50 md:text-sm",
@@ -454,18 +442,27 @@ const Departments = () => {
                 </div>
 
                 {/* Image Preview */}
-                {formData.image && (
+                {(deptImageURL.trim() !== "" || isUploading) && (
                   <div className="space-y-2">
                     <Label className="text-sm font-medium text-gray-700">
                       Preview
                     </Label>
                     <div className="relative h-40 w-full rounded-lg overflow-hidden bg-gray-100">
-                      <ImageWithFallback
-                        src={formData.image}
-                        alt="Preview"
-                        fill
-                        className="w-full h-full object-cover"
-                      />
+                      {/* 🔄 Loader Overlay */}
+                      {isUploading && (
+                        <div className="absolute inset-0 flex items-center justify-center bg-black/40 z-10">
+                          <Loader2 className="h-8 w-8 text-white animate-spin" />
+                        </div>
+                      )}
+                      {deptImageURL.trim() !== "" && (
+                        <Image
+                          key={deptImageURL} // forces refresh when URL changes
+                          src={deptImageURL}
+                          alt="Preview"
+                          fill
+                          className="object-cover"
+                        />
+                      )}
                     </div>
                   </div>
                 )}
