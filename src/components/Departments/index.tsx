@@ -26,68 +26,37 @@ import {
 } from "@/client/common.client";
 import { toast } from "sonner";
 import Image from "next/image";
-import { CreateDepartmentDTO } from "@/types/department.types";
-import { createDepartment } from "@/client/department.client";
-
-interface Department {
-  id: number;
-  name: string;
-  description: string;
-  image: string;
-  doctorCount: number;
-  patientCount: number;
-}
-
-const initialDepartments: Department[] = [
-  {
-    id: 1,
-    name: "Cardiology",
-    description: "Specialized in heart and cardiovascular system disorders",
-    image:
-      "https://images.unsplash.com/photo-1628348068343-c6a848d2b6dd?w=400&h=300&fit=crop",
-    doctorCount: 8,
-    patientCount: 245,
-  },
-  {
-    id: 2,
-    name: "Neurology",
-    description: "Treatment of nervous system and brain disorders",
-    image:
-      "https://images.unsplash.com/photo-1559757148-5c350d0d3c56?w=400&h=300&fit=crop",
-    doctorCount: 6,
-    patientCount: 189,
-  },
-  {
-    id: 3,
-    name: "Orthopedics",
-    description: "Musculoskeletal system, bones, joints, and muscles care",
-    image:
-      "https://images.unsplash.com/photo-1582750433449-648ed127bb54?w=400&h=300&fit=crop",
-    doctorCount: 10,
-    patientCount: 312,
-  },
-  {
-    id: 4,
-    name: "Pediatrics",
-    description: "Medical care for infants, children, and adolescents",
-    image:
-      "https://images.unsplash.com/photo-1581594549595-35f6edc7b762?w=400&h=300&fit=crop",
-    doctorCount: 7,
-    patientCount: 428,
-  },
-];
+import {
+  CreateDepartmentDTO,
+  createDepartmentResponse,
+} from "@/types/department.types";
+import {
+  useGetDepartmentsQuery,
+  useCreateDepartmentMutation,
+} from "@/redux/services/departmentApi";
+import DepartmentSkeleton from "./Skeletons/DepartmentSkeleton";
 
 const Departments = () => {
-  const [departments, setDepartments] =
-    useState<Department[]>(initialDepartments);
   const [searchQuery, setSearchQuery] = useState<string>("");
   const [isModalOpen, setIsModalOpen] = useState<boolean>(false);
   const [deptImageURL, setDeptImageURL] = useState<string>("");
   const [isUploading, setIsUploading] = useState<boolean>(false);
-  const [editingDepartment, setEditingDepartment] = useState<Department | null>(
-    null,
-  );
+  const [editingDepartment, setEditingDepartment] =
+    useState<createDepartmentResponse | null>(null);
+
+  const { data, isLoading, isError, error } = useGetDepartmentsQuery();
+  const [
+    createDepartment,
+    {
+      isSuccess,
+      isLoading: isCreateLoading,
+      isError: isCreateError,
+      error: createError,
+    },
+  ] = useCreateDepartmentMutation();
+
   const [formData, setFormData] = useState({
+    _id: "",
     name: "",
     description: "",
     image: "",
@@ -100,49 +69,48 @@ const Departments = () => {
 
   const { handleSubmit } = hookForm;
 
-  const filteredDepartments = departments.filter(
-    (dept) =>
-      dept.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      dept.description.toLowerCase().includes(searchQuery.toLowerCase()),
-  );
-
-  const handleOpenModal = (department?: Department) => {
+  const handleOpenModal = (department?: createDepartmentResponse) => {
+    console.log(department, "Department in modal");
     if (department) {
       setEditingDepartment(department);
-      setFormData({
-        name: department.name,
-        description: department.description,
-        image: department.image,
-      });
+      hookForm.setValue("_id", department._id);
+      hookForm.setValue("name", department.name);
+      hookForm.setValue("departmentImageUrl", department.departmentImageUrl);
+      hookForm.setValue("departmentPublicId", department.departmentPublicId);
+      hookForm.setValue("description", department.description);
+      setDeptImageURL(department.departmentImageUrl);
     } else {
       setEditingDepartment(null);
-      setFormData({ name: "", description: "", image: "" });
+      setFormData({ _id: "", name: "", description: "", image: "" });
     }
     setIsModalOpen(true);
   };
 
   const handleCloseModal = () => {
+    hookForm.reset();
     setIsModalOpen(false);
     setEditingDepartment(null);
-    setFormData({ name: "", description: "", image: "" });
+    setFormData({ _id: "", name: "", description: "", image: "" });
+    setDeptImageURL("");
   };
 
   const OnSubmit = async (data: CreateDepartmentDTO) => {
-    console.log(data);
-    const res = await createDepartment(data);
-    if (res.success) {
-      toast.success("Department created successfully");
+    if (data._id && data._id !== "") {
+      console.log("Updation triggered");
     } else {
-      toast.error("Failed to create department");
+      const res = await createDepartment(data);
+      if (res.data?.success) {
+        toast.success("Department created successfully");
+      } else {
+        toast.error("Faild to create department");
+      }
     }
 
     handleCloseModal();
   };
 
-  const handleDelete = (id: number) => {
-    if (window.confirm("Are you sure you want to delete this department?")) {
-      setDepartments(departments.filter((dept) => dept.id !== id));
-    }
+  const handleDelete = (id: string) => {
+    console.log("Department Deleted : ", id);
   };
 
   const OnFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -217,9 +185,11 @@ const Departments = () => {
               <p className="text-sm font-medium text-gray-500">
                 Total Departments
               </p>
-              <p className="text-3xl font-bold text-gray-900 mt-2">
-                {departments.length}
-              </p>
+              {data?.success && (
+                <p className="text-3xl font-bold text-gray-900 mt-2">
+                  {data.data?.length}
+                </p>
+              )}
             </div>
             <div className="w-12 h-12 rounded-lg bg-blue-100 flex items-center justify-center">
               <Building2 className="h-6 w-6 text-blue-600" />
@@ -231,9 +201,7 @@ const Departments = () => {
           <div className="flex items-center justify-between">
             <div>
               <p className="text-sm font-medium text-gray-500">Total Doctors</p>
-              <p className="text-3xl font-bold text-gray-900 mt-2">
-                {departments.reduce((sum, dept) => sum + dept.doctorCount, 0)}
-              </p>
+              <p className="text-3xl font-bold text-gray-900 mt-2">0</p>
             </div>
             <div className="w-12 h-12 rounded-lg bg-green-100 flex items-center justify-center">
               <Building2 className="h-6 w-6 text-green-600" />
@@ -247,9 +215,7 @@ const Departments = () => {
               <p className="text-sm font-medium text-gray-500">
                 Total Patients
               </p>
-              <p className="text-3xl font-bold text-gray-900 mt-2">
-                {departments.reduce((sum, dept) => sum + dept.patientCount, 0)}
-              </p>
+              <p className="text-3xl font-bold text-gray-900 mt-2">0</p>
             </div>
             <div className="w-12 h-12 rounded-lg bg-purple-100 flex items-center justify-center">
               <Building2 className="h-6 w-6 text-purple-600" />
@@ -263,16 +229,7 @@ const Departments = () => {
               <p className="text-sm font-medium text-gray-500">
                 Avg. Doctors/Dept
               </p>
-              <p className="text-3xl font-bold text-gray-900 mt-2">
-                {departments.length > 0
-                  ? Math.round(
-                      departments.reduce(
-                        (sum, dept) => sum + dept.doctorCount,
-                        0,
-                      ) / departments.length,
-                    )
-                  : 0}
-              </p>
+              <p className="text-3xl font-bold text-gray-900 mt-2">0</p>
             </div>
             <div className="w-12 h-12 rounded-lg bg-orange-100 flex items-center justify-center">
               <Building2 className="h-6 w-6 text-orange-600" />
@@ -283,66 +240,78 @@ const Departments = () => {
 
       {/* Departments Grid */}
       <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
-        {filteredDepartments.map((department) => (
-          <Card
-            key={department.id}
-            className="bg-white border-gray-200 shadow-sm hover:shadow-md transition-shadow overflow-hidden"
-          >
-            {/* Department Image */}
-            <div className="relative h-48 w-full overflow-hidden bg-gray-100">
-              <ImageWithFallback
-                src={department.image}
-                alt={department.name}
-                fill
-                className="w-full h-full object-cover"
-              />
-              <div className="absolute top-3 right-3 flex gap-2">
-                <button
-                  onClick={() => handleOpenModal(department)}
-                  className="p-2 bg-white/90 backdrop-blur-sm rounded-lg hover:bg-white transition-colors shadow-sm"
-                >
-                  <Edit className="h-4 w-4 text-blue-600" />
-                </button>
-                <button
-                  onClick={() => handleDelete(department.id)}
-                  className="p-2 bg-white/90 backdrop-blur-sm rounded-lg hover:bg-white transition-colors shadow-sm"
-                >
-                  <Trash2 className="h-4 w-4 text-red-600" />
-                </button>
-              </div>
-            </div>
+        {/* Loading State */}
+        {isLoading && (
+          <>
+            {[...Array(6)].map((_, i) => (
+              <DepartmentSkeleton key={i} />
+            ))}
+          </>
+        )}
 
-            {/* Department Info */}
-            <div className="p-6">
-              <h3 className="text-lg font-bold text-gray-900">
-                {department.name}
-              </h3>
-              <p className="text-sm text-gray-500 mt-2 line-clamp-2">
-                {department.description}
-              </p>
-
-              {/* Stats */}
-              <div className="mt-4 pt-4 border-t border-gray-100 flex items-center justify-between">
-                <div>
-                  <p className="text-xs text-gray-500">Doctors</p>
-                  <p className="text-lg font-semibold text-gray-900">
-                    {department.doctorCount}
-                  </p>
-                </div>
-                <div>
-                  <p className="text-xs text-gray-500">Patients</p>
-                  <p className="text-lg font-semibold text-gray-900">
-                    {department.patientCount}
-                  </p>
+        {!isLoading &&
+          data?.success &&
+          data.data &&
+          data.data.map((department) => (
+            <Card
+              key={department._id}
+              className="bg-white border-gray-200 shadow-sm hover:shadow-md transition-shadow overflow-hidden"
+            >
+              {/* Department Image */}
+              <div className="relative h-48 w-full overflow-hidden bg-gray-100">
+                <ImageWithFallback
+                  src={department.departmentImageUrl}
+                  alt={department.departmentPublicId}
+                  fill
+                  className="w-full h-full object-cover"
+                />
+                <div className="absolute top-3 right-3 flex gap-2">
+                  <button
+                    onClick={() => handleOpenModal(department)}
+                    className="p-2 bg-white/90 backdrop-blur-sm rounded-lg hover:bg-white transition-colors shadow-sm"
+                  >
+                    <Edit className="h-4 w-4 text-blue-600" />
+                  </button>
+                  <button
+                    onClick={() => handleDelete(department._id)}
+                    className="p-2 bg-white/90 backdrop-blur-sm rounded-lg hover:bg-white transition-colors shadow-sm"
+                  >
+                    <Trash2 className="h-4 w-4 text-red-600" />
+                  </button>
                 </div>
               </div>
-            </div>
-          </Card>
-        ))}
+
+              {/* Department Info */}
+              <div className="p-6">
+                <h3 className="text-lg font-bold text-gray-900">
+                  {department.name}
+                </h3>
+                <p className="text-sm text-gray-500 mt-2 line-clamp-2">
+                  {department.description}
+                </p>
+
+                {/* Stats */}
+                <div className="mt-4 pt-4 border-t border-gray-100 flex items-center justify-between">
+                  <div>
+                    <p className="text-xs text-gray-500">Doctors</p>
+                    <p className="text-lg font-semibold text-gray-900">
+                      {department.doctorCount}
+                    </p>
+                  </div>
+                  <div>
+                    <p className="text-xs text-gray-500">Patients</p>
+                    <p className="text-lg font-semibold text-gray-900">
+                      {department.patientCount}
+                    </p>
+                  </div>
+                </div>
+              </div>
+            </Card>
+          ))}
       </div>
 
       {/* Empty State */}
-      {filteredDepartments.length === 0 && (
+      {data?.success && data.data && data.data.length === 0 && (
         <div className="bg-white rounded-xl border border-gray-200 p-12 text-center shadow-sm">
           <Building2 className="h-12 w-12 text-gray-400 mx-auto mb-4" />
           <h3 className="text-lg font-medium text-gray-900">

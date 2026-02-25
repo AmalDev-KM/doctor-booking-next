@@ -1,4 +1,5 @@
 export interface CreateDepartmentDTO {
+  _id?: string;
   name: string;
   description?: string;
   departmentImageUrl?: string;
@@ -21,4 +22,9 @@ export interface UpdateDepartmentDTO {
   name?: string;
   description?: string;
   departmentImageUrl?: string;
+}
+
+export interface UpdateDepartment {
+  id: string;
+  data: Partial<CreateDepartmentDTO>;
 }
