@@ -43,6 +43,7 @@ export const departmentApi = baseApi.injectEndpoints({
         method: "PATCH",
         data,
       }),
+      invalidatesTags: ["Department"],
     }),
 
     // 🔹 DELETE department
@@ -60,4 +61,5 @@ export const {
   useGetDepartmentsQuery,
   useCreateDepartmentMutation,
   useDeleteDepartmentMutation,
+  useUpdateDepartmentMutation,
 } = departmentApi;

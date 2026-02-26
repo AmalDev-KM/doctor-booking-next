@@ -11,11 +11,8 @@ import {
   Image as ImageIcon,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Card } from "@/components/ui/card";
-import { Textarea } from "@/components/ui/textarea";
-import { ImageWithFallback } from "@/helpers/ImageWithFallback";
 import { cn } from "@/lib/utils";
 import { useForm } from "react-hook-form";
 import { DepartmentSchema, departmentType, initialValues } from "./Schema";
@@ -33,18 +30,27 @@ import {
 import {
   useGetDepartmentsQuery,
   useCreateDepartmentMutation,
+  useUpdateDepartmentMutation,
+  useDeleteDepartmentMutation,
 } from "@/redux/services/departmentApi";
 import DepartmentSkeleton from "./Skeletons/DepartmentSkeleton";
+import { DeleteConfirmationModal } from "../Modals/DeleteConfirmationModal";
+import { FormInput } from "../ui/FormInput";
+import { FormTextarea } from "../ui/FormTextArea";
 
 const Departments = () => {
   const [searchQuery, setSearchQuery] = useState<string>("");
   const [isModalOpen, setIsModalOpen] = useState<boolean>(false);
   const [deptImageURL, setDeptImageURL] = useState<string>("");
   const [isUploading, setIsUploading] = useState<boolean>(false);
+  const [isOpenDeleteModal, setIsOpenDeleteModal] = useState<{
+    status: boolean;
+    department: createDepartmentResponse | null;
+  }>({ status: false, department: null });
   const [editingDepartment, setEditingDepartment] =
     useState<createDepartmentResponse | null>(null);
 
-  const { data, isLoading, isError, error } = useGetDepartmentsQuery();
+  const { data, isLoading } = useGetDepartmentsQuery();
   const [
     createDepartment,
     {
@@ -54,13 +60,24 @@ const Departments = () => {
       error: createError,
     },
   ] = useCreateDepartmentMutation();
-
-  const [formData, setFormData] = useState({
-    _id: "",
-    name: "",
-    description: "",
-    image: "",
-  });
+  const [
+    updateDepartment,
+    {
+      isSuccess: isUpdateSuccess,
+      isError: isUpdateError,
+      error: updateError,
+      isLoading: isUpdateLoading,
+    },
+  ] = useUpdateDepartmentMutation();
+  const [
+    deleteDepartment,
+    {
+      isSuccess: isDeleteSuccess,
+      isError: isDeleteError,
+      isLoading: isDeleteLoading,
+      error: DeleteError,
+    },
+  ] = useDeleteDepartmentMutation();
 
   const hookForm = useForm<departmentType>({
     resolver: zodResolver(DepartmentSchema),
@@ -81,7 +98,6 @@ const Departments = () => {
       setDeptImageURL(department.departmentImageUrl);
     } else {
       setEditingDepartment(null);
-      setFormData({ _id: "", name: "", description: "", image: "" });
     }
     setIsModalOpen(true);
   };
@@ -90,15 +106,34 @@ const Departments = () => {
     hookForm.reset();
     setIsModalOpen(false);
     setEditingDepartment(null);
-    setFormData({ _id: "", name: "", description: "", image: "" });
     setDeptImageURL("");
   };
 
   const OnSubmit = async (data: CreateDepartmentDTO) => {
     if (data._id && data._id !== "") {
       console.log("Updation triggered");
+      const response = await updateDepartment({
+        id: data._id,
+        data: {
+          name: data.name,
+          description: data.description,
+          departmentImageUrl: data.departmentImageUrl,
+          departmentPublicId: data.departmentPublicId,
+        },
+      });
+      if (response.data?.success) {
+        toast.success("Department updated succesfully");
+      } else {
+        toast.error("Department updation failed");
+      }
     } else {
-      const res = await createDepartment(data);
+      const payload = {
+        name: data.name,
+        description: data.description,
+        departmentImageUrl: data.departmentImageUrl,
+        departmentPublicId: data.departmentPublicId,
+      };
+      const res = await createDepartment(payload);
       if (res.data?.success) {
         toast.success("Department created successfully");
       } else {
@@ -109,8 +144,13 @@ const Departments = () => {
     handleCloseModal();
   };
 
-  const handleDelete = (id: string) => {
-    console.log("Department Deleted : ", id);
+  const handleDelete = async (id: string) => {
+    const res = await deleteDepartment(id);
+    if (res.data && isDeleteSuccess) {
+      toast.success("Department deleted");
+    } else {
+      toast.error("Failed to delete department");
+    }
   };
 
   const OnFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -137,6 +177,8 @@ const Departments = () => {
     }
     setIsUploading(false);
   };
+
+  console.log(isOpenDeleteModal, "Is Open delete Modal");
 
   return (
     <div className="space-y-6">
@@ -259,9 +301,10 @@ const Departments = () => {
             >
               {/* Department Image */}
               <div className="relative h-48 w-full overflow-hidden bg-gray-100">
-                <ImageWithFallback
+                <Image
+                  key={department.departmentImageUrl} // forces refresh when URL changes
                   src={department.departmentImageUrl}
-                  alt={department.departmentPublicId}
+                  alt="Preview"
                   fill
                   className="w-full h-full object-cover"
                 />
@@ -273,7 +316,9 @@ const Departments = () => {
                     <Edit className="h-4 w-4 text-blue-600" />
                   </button>
                   <button
-                    onClick={() => handleDelete(department._id)}
+                    onClick={() =>
+                      setIsOpenDeleteModal({ status: true, department })
+                    }
                     className="p-2 bg-white/90 backdrop-blur-sm rounded-lg hover:bg-white transition-colors shadow-sm"
                   >
                     <Trash2 className="h-4 w-4 text-red-600" />
@@ -360,7 +405,7 @@ const Departments = () => {
                   >
                     Department Name
                   </Label>
-                  <Input<departmentType>
+                  <FormInput<departmentType>
                     name="name"
                     HookForm={hookForm}
                     type="text"
@@ -377,7 +422,7 @@ const Departments = () => {
                   >
                     Description
                   </Label>
-                  <Textarea
+                  <FormTextarea
                     name="description"
                     HookForm={hookForm}
                     placeholder="Brief description of the department..."
@@ -457,6 +502,29 @@ const Departments = () => {
             </div>
           </div>
         </div>
+      )}
+
+      {isOpenDeleteModal.status && (
+        <DeleteConfirmationModal
+          open={isOpenDeleteModal.status}
+          title="Delete Department?"
+          description={
+            isOpenDeleteModal.department
+              ? `This will permanently delete ${isOpenDeleteModal.department.name}.`
+              : ""
+          }
+          loading={isDeleteLoading}
+          onConfirm={() => {
+            if (!isOpenDeleteModal.department) return;
+            return handleDelete(isOpenDeleteModal.department._id);
+          }}
+          onCancel={() =>
+            setIsOpenDeleteModal({ status: false, department: null })
+          }
+          onClose={() =>
+            setIsOpenDeleteModal({ status: false, department: null })
+          }
+        />
       )}
     </div>
   );
