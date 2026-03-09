@@ -143,7 +143,6 @@ const DoctorProfileSchema = new Schema(
     professionalInfo: {
       specialization: {
         type: String,
-        required: true,
       },
       superSpecialization: {
         type: String,
@@ -154,14 +153,12 @@ const DoctorProfileSchema = new Schema(
       },
       medicalRegistrationNumber: {
         type: String,
-        required: true,
       },
       medicalCouncil: {
         type: String,
       },
       consultationFee: {
         type: Number,
-        required: true,
         min: 0,
       },
       emergencyFee: {
