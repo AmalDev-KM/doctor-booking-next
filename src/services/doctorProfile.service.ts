@@ -79,5 +79,41 @@ export async function getPendingDoctorProfilesForVerification() {
   );
 }
 
+export async function approveDoctorProfile(
+  doctorProfileId: string,
+  departmentId: string,
+) {
+  const profile = await DoctorProfile.findOne({
+    _id: doctorProfileId,
+    isDeleted: false,
+  }).select("isProfileCompleted");
 
+  if (!profile) {
+    throw new Error("DOCTOR_PROFILE_NOT_FOUND");
+  }
+
+  if (!profile.isProfileCompleted) {
+    throw new Error("DOCTOR_PROFILE_NOT_COMPLETED");
+  }
+
+  const updated = await DoctorProfile.findOneAndUpdate(
+    { _id: doctorProfileId, isDeleted: false },
+    {
+      $set: {
+        departmentId,
+        verificationStatus: "approved",
+      },
+    },
+    {
+      returnDocument: "after",
+      runValidators: true,
+    },
+  );
+
+  if (!updated) {
+    throw new Error("DOCTOR_PROFILE_NOT_FOUND");
+  }
+
+  return updated;
+}
 

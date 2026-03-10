@@ -93,6 +93,11 @@ const DoctorProfileSchema = new Schema(
       unique: true,
     },
 
+    departmentId: {
+      type: Schema.Types.ObjectId,
+      ref: "Department",
+    },
+
     basicInfo: {
       firstName: {
         type: String,

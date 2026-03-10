@@ -6,6 +6,7 @@ import {
   upsertDoctorQualifications,
   upsertDoctorClinics,
   getPendingDoctorProfilesForVerification,
+  approveDoctorProfile,
 } from "@/services/doctorProfile.service";
 import { errorResponse, successResponse } from "@/utils/responses";
 import {
@@ -13,6 +14,7 @@ import {
   doctorProfessionalInfoSchema,
   doctorQualificationsSchema,
   doctorClinicsSchema,
+  approveDoctorProfileSchema,
 } from "@/validations/doctorProfile.validation";
 import { NextRequest, NextResponse } from "next/server";
 
@@ -241,4 +243,45 @@ export const getPendingDoctorProfilesForVerificationController =
       return errorResponse("Unexpected server error", 500);
     }
   };
+
+export const approveDoctorProfileController = async (
+  req: NextRequest,
+): Promise<NextResponse> => {
+  try {
+    const body = await req.json();
+    const { error, value } = approveDoctorProfileSchema.validate(body);
+
+    if (error) {
+      return errorResponse(error.details[0].message, 400);
+    }
+
+    await connectDB();
+
+    const updated = await approveDoctorProfile(
+      value.doctorProfileId,
+      value.departmentId,
+    );
+
+    return successResponse(
+      updated,
+      "Doctor profile approved successfully",
+      200,
+    );
+  } catch (err: unknown) {
+    console.error("Error in approveDoctorProfileController:", err);
+    if (err instanceof Error) {
+      if (err.message === "DOCTOR_PROFILE_NOT_FOUND") {
+        return errorResponse("Doctor profile not found", 404);
+      }
+      if (err.message === "DOCTOR_PROFILE_NOT_COMPLETED") {
+        return errorResponse(
+          "Doctor profile is not completed. Cannot approve.",
+          400,
+        );
+      }
+      return errorResponse(err.message, 500);
+    }
+    return errorResponse("Unexpected server error", 500);
+  }
+};
 

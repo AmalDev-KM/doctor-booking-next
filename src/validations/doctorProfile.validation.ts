@@ -82,4 +82,10 @@ export const doctorClinicsSchema = Joi.object({
     .required(),
 });
 
+export const approveDoctorProfileSchema = Joi.object({
+  doctorProfileId: Joi.string().trim().required(),
+  departmentId: Joi.string().trim().required(),
+});
+
+
 
