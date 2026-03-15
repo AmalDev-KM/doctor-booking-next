@@ -23,13 +23,18 @@ const QualificationSchema = new Schema(
     yearOfCompletion: {
       type: Number,
       min: 1950,
-      max: new Date().getFullYear(),
+      validate: {
+        validator: function (value: number) {
+          return value <= new Date().getFullYear();
+        },
+        message: "Year of completion cannot be in the future.",
+      },
     },
     country: {
       type: String,
     },
   },
-  { _id: false }
+  { _id: false },
 );
 
 const ClinicSchema = new Schema(
@@ -77,7 +82,7 @@ const ClinicSchema = new Schema(
       default: "Offline",
     },
   },
-  { _id: false }
+  { _id: false },
 );
 
 /* =====================================================
@@ -212,7 +217,7 @@ const DoctorProfileSchema = new Schema(
   },
   {
     timestamps: true,
-  }
+  },
 );
 
 /* =====================================================
